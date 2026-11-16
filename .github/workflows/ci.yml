@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  staging:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - run: echo "Liberando para staging"
+
+  production:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: staging
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - run: echo "Liberando para production (exige aprovação do revisor)"
